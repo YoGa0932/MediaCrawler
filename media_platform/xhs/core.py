@@ -168,13 +168,27 @@ class XiaoHongShuCrawler(AbstractCrawler):
             await self.context_page.goto(url)
 
             try:
-                # 查找按钮并点击
-                follow_button = await self.context_page.query_selector(".follow-button")
-                if follow_button:
-                    await follow_button.click()
-                    utils.logger.info(f"[XiaoHongShuCrawler.follow] Clicked follow button on: {url}")
-                else:
+                # 查找 follow 按钮
+                follow_button = await self.context_page.query_selector('.follow-button')
+                if not follow_button:
                     utils.logger.warning(f"[XiaoHongShuCrawler.follow] Follow button not found on: {url}")
+                    continue
+
+                # 查找 follow 按钮内的文本内容
+                follow_text_element = await follow_button.query_selector('.reds-button-new-text')
+                if not follow_text_element:
+                    utils.logger.warning(f"[XiaoHongShuCrawler.follow] Follow button text element not found on: {url}")
+                    continue
+
+                follow_text = await follow_text_element.evaluate('node => node.textContent.trim()')
+                if follow_text != "关注":
+                    utils.logger.info(f"[XiaoHongShuCrawler.follow] Already following user at: {url}")
+                    continue
+
+                # 点击 follow 按钮
+                await follow_button.click()
+                utils.logger.info(f"[XiaoHongShuCrawler.follow] Clicked follow button on: {url}")
+
             except Exception as e:
                 utils.logger.error(f"[XiaoHongShuCrawler.follow] Error clicking follow button on: {url}, {str(e)}")
 
