@@ -80,6 +80,8 @@ class XiaoHongShuCrawler(AbstractCrawler):
             elif config.CRAWLER_TYPE == "creator":
                 # Get creator's information and their notes and comments
                 await self.get_creators_and_notes()
+            elif config.CRAWLER_TYPE == "follow":  # 一键关注
+                await self.follow()
             else:
                 pass
 
@@ -110,7 +112,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
                         sort=SearchSortType(config.SORT_TYPE) if config.SORT_TYPE != '' else SearchSortType.GENERAL,
                     )
                     utils.logger.info(f"[XiaoHongShuCrawler.search] Search notes res:{notes_res}")
-                    if(not notes_res or not notes_res.get('has_more', False)):
+                    if (not notes_res or not notes_res.get('has_more', False)):
                         utils.logger.info("No more content!")
                         break
                     semaphore = asyncio.Semaphore(config.MAX_CONCURRENCY_NUM)
@@ -150,6 +152,33 @@ class XiaoHongShuCrawler(AbstractCrawler):
 
             note_ids = [note_item.get("note_id") for note_item in all_notes_list]
             await self.batch_get_note_comments(note_ids)
+
+    async def follow(self) -> None:
+        """Visit each URL and click the follow button."""
+        utils.logger.info("[XiaoHongShuCrawler.follow] Begin follow process")
+        # 小红书基础URL
+        base_url = "https://www.xiaohongshu.com/user/profile/"
+
+        # 遍历参数数组
+        for user_id in config.XHS_USER_ID:
+            # 生成新的URL
+            url = base_url + user_id
+
+            utils.logger.info(f"[XiaoHongShuCrawler.follow] Visiting URL: {url}")
+            await self.context_page.goto(url)
+
+            try:
+                # 查找按钮并点击
+                follow_button = await self.context_page.query_selector(".follow-button")
+                if follow_button:
+                    await follow_button.click()
+                    utils.logger.info(f"[XiaoHongShuCrawler.follow] Clicked follow button on: {url}")
+                else:
+                    utils.logger.warning(f"[XiaoHongShuCrawler.follow] Follow button not found on: {url}")
+            except Exception as e:
+                utils.logger.error(f"[XiaoHongShuCrawler.follow] Error clicking follow button on: {url}, {str(e)}")
+
+        utils.logger.info("[XiaoHongShuCrawler.follow] Follow process finished")
 
     async def fetch_creator_notes_detail(self, note_list: List[Dict]):
         """
