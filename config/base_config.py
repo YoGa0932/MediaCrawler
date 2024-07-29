@@ -58,7 +58,7 @@ XHS_SPECIFIED_ID_LIST = [
     # ........................
 ]
 
-
+# (\S+) replace "\1",
 # 小红书关注ID
 XHS_USER_ID = [
     "5d2092bd0000000016031e41",
