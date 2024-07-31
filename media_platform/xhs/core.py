@@ -160,48 +160,21 @@ class XiaoHongShuCrawler(AbstractCrawler):
             await self.batch_get_note_comments(note_ids)
 
     async def follow(self) -> None:
-        """Visit each URL and click the follow button."""
         utils.logger.info("[XiaoHongShuCrawler.follow] Begin follow process")
-        # 小红书基础URL
-        base_url = "https://www.xiaohongshu.com/user/profile/"
 
-        # 遍历参数数组
-        for user_id in config.XHS_USER_ID:
-            # 生成新的URL
-            url = base_url + user_id
+        user_ids = config.XHS_USER_ID
+        if len(user_ids) > 100:
+            utils.logger.warning("[XiaoHongShuCrawler.follow] User ID list exceeds 100, truncating to 100")
+            user_ids = user_ids[:100]
 
-            utils.logger.info(f"[XiaoHongShuCrawler.follow] Visiting URL: {url}")
-            await self.context_page.goto(url)
+        for index, user_id in enumerate(user_ids):
+            utils.logger.info(f"[XiaoHongShuCrawler.follow]: id--> {user_id}")
+            await self.xhs_client.follow_user(user_id)
 
-            # 频繁操作可能会需要验证 这里验证通过后等待30s在执行避免频繁操作
-            if "请通过验证" in await self.context_page.content():
-                utils.logger.info("[XiaoHongShuLogin.check_login_state] 登录过程中出现验证码，请手动验证")
-                await asyncio.sleep(30)
-
-            try:
-                # 查找 follow 按钮
-                follow_button = await self.context_page.query_selector('.follow-button')
-                if not follow_button:
-                    utils.logger.warning(f"[XiaoHongShuCrawler.follow] Follow button not found on: {url}")
-                    continue
-
-                # 查找 follow 按钮内的文本内容
-                follow_text_element = await follow_button.query_selector('.reds-button-new-text')
-                if not follow_text_element:
-                    utils.logger.warning(f"[XiaoHongShuCrawler.follow] Follow button text element not found on: {url}")
-                    continue
-
-                follow_text = await follow_text_element.evaluate('node => node.textContent.trim()')
-                if follow_text != "关注":
-                    utils.logger.info(f"[XiaoHongShuCrawler.follow] Already following user at: {url}")
-                    continue
-
-                # 点击 follow 按钮
-                await follow_button.click()
-                utils.logger.info(f"[XiaoHongShuCrawler.follow] Clicked follow button on: {url}")
-
-            except Exception as e:
-                utils.logger.error(f"[XiaoHongShuCrawler.follow] Error clicking follow button on: {url}, {str(e)}")
+            # Pause for 15 seconds after every 100 iterations
+            if (index + 1) % 100 == 0:
+                utils.logger.info("[XiaoHongShuCrawler.follow] Pausing for 15 seconds")
+                await asyncio.sleep(15)
 
         utils.logger.info("[XiaoHongShuCrawler.follow] Follow process finished")
 

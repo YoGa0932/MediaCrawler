@@ -197,6 +197,22 @@ class XiaoHongShuClient(AbstractApiClient):
             "note_type": note_type.value
         }
         return await self.post(uri, data)
+    async def follow_user(
+            self, user_id: str,
+        ) -> Dict:
+        """
+        根据用户ID关注用户
+        Args:
+            user_id: 用户ID
+
+        Returns:
+
+        """
+        uri = "/api/sns/web/v1/user/follow"
+        data = {
+            "target_user_id": user_id,
+        }
+        return await self.post(uri, data)
 
     async def get_note_by_id(self, note_id: str, xsec_source: str, xsec_token: str) -> Dict:
         """
