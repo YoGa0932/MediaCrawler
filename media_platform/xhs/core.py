@@ -173,6 +173,11 @@ class XiaoHongShuCrawler(AbstractCrawler):
             utils.logger.info(f"[XiaoHongShuCrawler.follow] Visiting URL: {url}")
             await self.context_page.goto(url)
 
+            # 频繁操作可能会需要验证 这里验证通过后等待30s在执行避免频繁操作
+            if "请通过验证" in await self.context_page.content():
+                utils.logger.info("[XiaoHongShuLogin.check_login_state] 登录过程中出现验证码，请手动验证")
+                await asyncio.sleep(30)
+
             try:
                 # 查找 follow 按钮
                 follow_button = await self.context_page.query_selector('.follow-button')
