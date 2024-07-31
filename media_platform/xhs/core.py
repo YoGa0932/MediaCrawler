@@ -163,18 +163,27 @@ class XiaoHongShuCrawler(AbstractCrawler):
         utils.logger.info("[XiaoHongShuCrawler.follow] Begin follow process")
 
         user_ids = config.XHS_USER_ID
-        if len(user_ids) > 100:
-            utils.logger.warning("[XiaoHongShuCrawler.follow] User ID list exceeds 100, truncating to 100")
-            user_ids = user_ids[:100]
+        total_ids = len(user_ids)
+        utils.logger.info(f"[XiaoHongShuCrawler.follow] Total user IDs to follow: {total_ids}")
 
-        for index, user_id in enumerate(user_ids):
-            utils.logger.info(f"[XiaoHongShuCrawler.follow]: id--> {user_id}")
-            await self.xhs_client.follow_user(user_id)
+        start = 0
+        while start < total_ids:
+            # Determine a random batch size (between 1 and 100)
+            batch_size = random.randint(1, 100)
+            batch = user_ids[start:start + batch_size]
+            utils.logger.info(f"[XiaoHongShuCrawler.follow] Processing batch from {start} to {start + len(batch) - 1}")
 
-            # Pause for 15 seconds after every 100 iterations
-            if (index + 1) % 100 == 0:
-                utils.logger.info("[XiaoHongShuCrawler.follow] Pausing for 15 seconds")
-                await asyncio.sleep(15)
+            for user_id in batch:
+                utils.logger.info(f"[XiaoHongShuCrawler.follow]: id--> {user_id}")
+                await self.xhs_client.follow_user(user_id)
+
+            start += batch_size
+
+            if start < total_ids:
+                # Determine a random pause duration (between 1 second and 60 seconds)
+                pause_duration = random.randint(1, 60)
+                utils.logger.info(f"[XiaoHongShuCrawler.follow] Pausing for {pause_duration} seconds")
+                await asyncio.sleep(pause_duration)
 
         utils.logger.info("[XiaoHongShuCrawler.follow] Follow process finished")
 
