@@ -27,8 +27,8 @@ class XiaoHongShuCrawler(AbstractCrawler):
 
     def __init__(self) -> None:
         self.index_url = "https://www.xiaohongshu.com"
-        # self.user_agent = utils.get_user_agent()
-        self.user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+        self.user_agent = utils.get_user_agent()
+        # self.user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 
     async def start(self) -> None:
         playwright_proxy_format, httpx_proxy_format = None, None
@@ -83,6 +83,8 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 await self.get_creators_and_notes()
             elif config.CRAWLER_TYPE == "follow":  # 一键关注
                 await self.follow()
+            elif config.CRAWLER_TYPE == "follow-by-api":  # 通过api一键关注
+                await self.follow_by_api()
             else:
                 pass
 
@@ -160,32 +162,114 @@ class XiaoHongShuCrawler(AbstractCrawler):
             await self.batch_get_note_comments(note_ids)
 
     async def follow(self) -> None:
-        utils.logger.info("[XiaoHongShuCrawler.follow] Begin follow process")
+        """访问每个URL并点击关注按钮。"""
+        utils.logger.info("[XiaoHongShuCrawler.follow] 开始关注流程")
+        # 小红书基础URL
+        base_url = "https://www.xiaohongshu.com/user/profile/"
 
         user_ids = config.XHS_USER_ID
         total_ids = len(user_ids)
-        utils.logger.info(f"[XiaoHongShuCrawler.follow] Total user IDs to follow: {total_ids}")
+        utils.logger.info(f"[XiaoHongShuCrawler.follow] 总共有 {total_ids} 个用户ID需要关注")
+
+        if total_ids > 100:
+            utils.logger.warning("[XiaoHongShuCrawler.follow] 用户ID列表超过100，将分批执行")
 
         start = 0
+        total_processed = 0
         while start < total_ids:
-            # Determine a random batch size (between 1 and 100)
+            # 随机确定批次大小（最小1，最大100）
             batch_size = random.randint(1, 100)
             batch = user_ids[start:start + batch_size]
-            utils.logger.info(f"[XiaoHongShuCrawler.follow] Processing batch from {start} to {start + len(batch) - 1}")
+            batch_count = len(batch)
+            utils.logger.info(
+                f"[XiaoHongShuCrawler.follow] 处理从 {start} 到 {start + batch_count - 1} 共 {batch_count} 个用户")
 
             for user_id in batch:
-                utils.logger.info(f"[XiaoHongShuCrawler.follow]: id--> {user_id}")
-                await self.xhs_client.follow_user(user_id)
+                url = base_url + user_id
+                utils.logger.info(f"[XiaoHongShuCrawler.follow] 访问URL: {url}")
+                await self.context_page.goto(url)
 
-            start += batch_size
+                # 频繁操作可能会需要验证，这里验证通过后等待30秒再执行以避免频繁操作
+                if "请通过验证" in await self.context_page.content():
+                    utils.logger.info("[XiaoHongShuLogin.check_login_state] 登录过程中出现验证码，请手动验证")
+                    await asyncio.sleep(30)
 
-            if start < total_ids:
-                # Determine a random pause duration (between 1 second and 60 seconds)
-                pause_duration = random.randint(1, 60)
-                utils.logger.info(f"[XiaoHongShuCrawler.follow] Pausing for {pause_duration} seconds")
+                try:
+                    # 查找关注按钮
+                    follow_button = await self.context_page.query_selector('.follow-button')
+                    if not follow_button:
+                        utils.logger.warning(f"[XiaoHongShuCrawler.follow] 在 {url} 未找到关注按钮")
+                        continue
+
+                    # 查找关注按钮内的文本内容
+                    follow_text_element = await follow_button.query_selector('.reds-button-new-text')
+                    if not follow_text_element:
+                        utils.logger.warning(f"[XiaoHongShuCrawler.follow] 在 {url} 未找到关注按钮文本元素")
+                        continue
+
+                    follow_text = await follow_text_element.evaluate('node => node.textContent.trim()')
+                    if follow_text != "关注":
+                        utils.logger.info(f"[XiaoHongShuCrawler.follow] 已经关注了用户 {user_id} ")
+                        continue
+
+                    # 点击关注按钮
+                    await follow_button.click()
+                    utils.logger.info(f"[XiaoHongShuCrawler.follow] 点击了 {url} 的关注按钮")
+
+                except Exception as e:
+                    utils.logger.error(f"[XiaoHongShuCrawler.follow] 点击 {url} 的关注按钮时出错: {str(e)}")
+
+            start += batch_count
+            total_processed += batch_count
+            remaining = total_ids - start
+            utils.logger.info(
+                f"[XiaoHongShuCrawler.follow] 本次循环执行了 {batch_count} 条，累计执行了 {total_processed} 条，还剩 {remaining} 条未执行")
+
+            if remaining > 0:
+                # 随机确定休息时间（最小1秒，最大180秒）
+                pause_duration = random.randint(1, 180)
+                utils.logger.info(f"[XiaoHongShuCrawler.follow] 休息 {pause_duration} 秒")
                 await asyncio.sleep(pause_duration)
 
-        utils.logger.info("[XiaoHongShuCrawler.follow] Follow process finished")
+        utils.logger.info("[XiaoHongShuCrawler.follow] 关注流程结束")
+
+    async def follow_by_api(self) -> None:
+        utils.logger.info("[XiaoHongShuCrawler.follow] 开始关注流程")
+
+        user_ids = config.XHS_USER_ID
+        total_ids = len(user_ids)
+        utils.logger.info(f"[XiaoHongShuCrawler.follow] 总共有 {total_ids} 个用户ID需要关注")
+
+        if total_ids > 100:
+            utils.logger.warning("[XiaoHongShuCrawler.follow] 用户ID列表超过100，将分批执行")
+
+        start = 0
+        total_processed = 0
+        while start < total_ids:
+            # 随机确定批次大小（最小1，最大100）
+            batch_size = random.randint(1, 100)
+            batch = user_ids[start:start + batch_size]
+            batch_count = len(batch)
+            utils.logger.info(
+                f"[XiaoHongShuCrawler.follow] 处理从 {start} 到 {start + batch_count - 1} 共 {batch_count} 个用户")
+
+            for user_id in batch:
+                utils.logger.info(f"[XiaoHongShuCrawler.follow]: ID --> {user_id}")
+                await self.xhs_client.follow_user(user_id)
+
+            start += batch_count
+            total_processed += batch_count
+            remaining = total_ids - start
+            utils.logger.info(
+                f"[XiaoHongShuCrawler.follow] 本次循环执行了 {batch_count} 条，累计执行了 {total_processed} 条，还剩 {remaining} 条未执行")
+
+            if remaining > 0:
+                # 随机确定休息时间（最小1秒，最大180秒）
+                pause_duration = random.randint(1, 180)
+                utils.logger.info(f"[XiaoHongShuCrawler.follow] 休息 {pause_duration} 秒")
+                await asyncio.sleep(pause_duration)
+
+        utils.logger.info(f"[XiaoHongShuCrawler.follow] 关注流程结束，共关注了 {total_processed} 个用户")
 
     async def fetch_creator_notes_detail(self, note_list: List[Dict]):
         """
