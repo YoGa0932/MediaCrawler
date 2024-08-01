@@ -182,7 +182,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
             batch = user_ids[start:start + batch_size]
             batch_count = len(batch)
             utils.logger.info(
-                f"[XiaoHongShuCrawler.follow] 处理从 {start} 到 {start + batch_count - 1} 共 {batch_count} 个用户")
+                f"[XiaoHongShuCrawler.follow] 处理从第 {start} 条到第 {start + batch_count - 1} 条共 {batch_count} 个用户")
 
             for user_id in batch:
                 url = base_url + user_id
@@ -251,7 +251,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
             batch = user_ids[start:start + batch_size]
             batch_count = len(batch)
             utils.logger.info(
-                f"[XiaoHongShuCrawler.follow] 处理从 {start} 到 {start + batch_count - 1} 共 {batch_count} 个用户")
+                f"[XiaoHongShuCrawler.follow] 处理从第 {start} 条到第 {start + batch_count - 1} 条共 {batch_count} 个用户")
 
             for user_id in batch:
                 utils.logger.info(f"[XiaoHongShuCrawler.follow]: ID --> {user_id}")
