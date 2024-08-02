@@ -191,8 +191,11 @@ class XiaoHongShuCrawler(AbstractCrawler):
 
                 # 频繁操作可能会需要验证，这里验证通过后等待30秒再执行以避免频繁操作
                 if "滑块验证" in await self.context_page.title():
-                    utils.logger.info("[XiaoHongShuLogin.check_login_state] 登录过程中出现验证码，请手动验证")
+                    utils.logger.info("[XiaoHongShuLogin.follow] 登录过程中出现验证码，请手动验证")
                     await asyncio.sleep(3000)
+                if "网络异常" in await self.context_page.title():
+                    utils.logger.info("[XiaoHongShuLogin.follow_by_api] 操作频繁，休息一会")
+                    await asyncio.sleep(6000)
 
                 try:
                     # 查找关注按钮
@@ -234,14 +237,14 @@ class XiaoHongShuCrawler(AbstractCrawler):
         utils.logger.info("[XiaoHongShuCrawler.follow] 关注流程结束")
 
     async def follow_by_api(self) -> None:
-        utils.logger.info("[XiaoHongShuCrawler.follow] 开始关注流程")
+        utils.logger.info("[XiaoHongShuCrawler.follow_by_api] 开始关注流程")
 
         user_ids = config.XHS_USER_ID
         total_ids = len(user_ids)
-        utils.logger.info(f"[XiaoHongShuCrawler.follow] 总共有 {total_ids} 个用户ID需要关注")
+        utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 总共有 {total_ids} 个用户ID需要关注")
 
         if total_ids > 100:
-            utils.logger.warning("[XiaoHongShuCrawler.follow] 用户ID列表超过100，将分批执行")
+            utils.logger.warning("[XiaoHongShuCrawler.follow_by_api] 用户ID列表超过100，将分批执行")
 
         start = 0
         total_processed = 0
@@ -251,25 +254,30 @@ class XiaoHongShuCrawler(AbstractCrawler):
             batch = user_ids[start:start + batch_size]
             batch_count = len(batch)
             utils.logger.info(
-                f"[XiaoHongShuCrawler.follow] 处理从第 {start} 条到第 {start + batch_count - 1} 条共 {batch_count} 个用户")
+                f"[XiaoHongShuCrawler.follow_by_api] 处理从第 {start} 条到第 {start + batch_count - 1} 条共 {batch_count} 个用户")
 
             for user_id in batch:
-                utils.logger.info(f"[XiaoHongShuCrawler.follow]: ID --> {user_id}")
+                utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api]: ID --> {user_id}")
                 await self.xhs_client.follow_user(user_id)
+
+                # 频繁操作可能会需要验证，这里验证通过后等待30秒再执行以避免频繁操作
+                if "滑块验证" in await self.context_page.title():
+                    utils.logger.info("[XiaoHongShuLogin.follow_by_api] 登录过程中出现验证码，请手动验证")
+                    await asyncio.sleep(3000)
 
             start += batch_count
             total_processed += batch_count
             remaining = total_ids - start
             utils.logger.info(
-                f"[XiaoHongShuCrawler.follow] 本次循环执行了 {batch_count} 条，累计执行了 {total_processed} 条，还剩 {remaining} 条未执行")
+                f"[XiaoHongShuCrawler.follow_by_api] 本次循环执行了 {batch_count} 条，累计执行了 {total_processed} 条，还剩 {remaining} 条未执行")
 
             if remaining > 0:
                 # 随机确定休息时间（最小1秒，最大180秒）
                 pause_duration = random.randint(1, 180)
-                utils.logger.info(f"[XiaoHongShuCrawler.follow] 休息 {pause_duration} 秒")
+                utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 休息 {pause_duration} 秒")
                 await asyncio.sleep(pause_duration)
 
-        utils.logger.info(f"[XiaoHongShuCrawler.follow] 关注流程结束，共关注了 {total_processed} 个用户")
+        utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 关注流程结束，共关注了 {total_processed} 个用户")
 
     async def fetch_creator_notes_detail(self, note_list: List[Dict]):
         """
