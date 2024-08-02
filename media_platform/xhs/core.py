@@ -192,10 +192,10 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 # 频繁操作可能会需要验证，这里验证通过后等待30秒再执行以避免频繁操作
                 if "滑块验证" in await self.context_page.title():
                     utils.logger.info("[XiaoHongShuLogin.follow] 登录过程中出现验证码，请手动验证")
-                    await asyncio.sleep(3000)
+                    await asyncio.sleep(300)
                 if "网络异常" in await self.context_page.title():
                     utils.logger.info("[XiaoHongShuLogin.follow_by_api] 操作频繁，休息一会")
-                    await asyncio.sleep(6000)
+                    await asyncio.sleep(600)
 
                 try:
                     # 查找关注按钮
@@ -263,7 +263,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 # 频繁操作可能会需要验证，这里验证通过后等待30秒再执行以避免频繁操作
                 if "滑块验证" in await self.context_page.title():
                     utils.logger.info("[XiaoHongShuLogin.follow_by_api] 登录过程中出现验证码，请手动验证")
-                    await asyncio.sleep(3000)
+                    await asyncio.sleep(300)
 
             start += batch_count
             total_processed += batch_count
