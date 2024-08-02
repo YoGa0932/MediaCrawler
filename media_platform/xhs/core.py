@@ -190,9 +190,9 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 await self.context_page.goto(url)
 
                 # 频繁操作可能会需要验证，这里验证通过后等待30秒再执行以避免频繁操作
-                if "请通过验证" in await self.context_page.content():
+                if "滑块验证" in await self.context_page.title():
                     utils.logger.info("[XiaoHongShuLogin.check_login_state] 登录过程中出现验证码，请手动验证")
-                    await asyncio.sleep(30)
+                    await asyncio.sleep(3000)
 
                 try:
                     # 查找关注按钮
