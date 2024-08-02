@@ -171,33 +171,37 @@ class XiaoHongShuCrawler(AbstractCrawler):
         total_ids = len(user_ids)
         utils.logger.info(f"[XiaoHongShuCrawler.follow] 总共有 {total_ids} 个用户ID需要关注")
 
-        if total_ids > 100:
-            utils.logger.warning("[XiaoHongShuCrawler.follow] 用户ID列表超过100，将分批执行")
-
         start = 0
         total_processed = 0
         while start < total_ids:
-            # 随机确定批次大小（最小1，最大100）
-            batch_size = random.randint(1, 100)
+            batch_size = random.randint(1, 30) if total_ids > 30 else total_ids
             batch = user_ids[start:start + batch_size]
             batch_count = len(batch)
             utils.logger.info(
                 f"[XiaoHongShuCrawler.follow] 处理从第 {start} 条到第 {start + batch_count - 1} 条共 {batch_count} 个用户")
 
-            for user_id in batch:
+            for i, user_id in enumerate(batch):
                 url = base_url + user_id
+                current_index = total_processed + i + 1
+                remaining = total_ids - current_index
+                utils.logger.info(
+                    f"[XiaoHongShuCrawler.follow] 这是第 {current_index} 个用户，当前批次总共有 {batch_count} 个用户，还剩 {remaining} 个待执行")
+
                 utils.logger.info(f"[XiaoHongShuCrawler.follow] 访问URL: {url}")
                 await self.context_page.goto(url)
-
-                # 频繁操作可能会需要验证，这里验证通过后等待30秒再执行以避免频繁操作
-                if "滑块验证" in await self.context_page.title():
-                    utils.logger.info("[XiaoHongShuLogin.follow] 登录过程中出现验证码，请手动验证")
-                    await asyncio.sleep(300)
-                if "网络异常" in await self.context_page.title():
-                    utils.logger.info("[XiaoHongShuLogin.follow_by_api] 操作频繁，休息一会")
-                    await asyncio.sleep(600)
+                utils.logger.info(f"[XiaoHongShuCrawler.follow] 延迟1-2s执行")
+                await asyncio.sleep(random.uniform(1.0, 2.0))
 
                 try:
+                    # 频繁操作可能会需要验证，这里验证通过后等待300秒再执行以避免频繁操作
+                    if "滑块验证" in await self.context_page.title():
+                        utils.logger.info(
+                            "[XiaoHongShuLogin.follow] 登录过程中出现验证码，请手动验证，验证通过后请等待5分钟")
+                        await asyncio.sleep(300)
+                    elif "网络异常" in await self.context_page.title():
+                        utils.logger.info("[XiaoHongShuLogin.follow] 操作频繁，休息一会")
+                        await asyncio.sleep(600)
+
                     # 查找关注按钮
                     follow_button = await self.context_page.query_selector('.follow-button')
                     if not follow_button:
@@ -224,7 +228,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
 
             start += batch_count
             total_processed += batch_count
-            remaining = total_ids - start
+            remaining = total_ids - total_processed
             utils.logger.info(
                 f"[XiaoHongShuCrawler.follow] 本次循环执行了 {batch_count} 条，累计执行了 {total_processed} 条，还剩 {remaining} 条未执行")
 
@@ -232,7 +236,16 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 # 随机确定休息时间（最小1秒，最大180秒）
                 pause_duration = random.randint(1, 180)
                 utils.logger.info(f"[XiaoHongShuCrawler.follow] 休息 {pause_duration} 秒")
-                await asyncio.sleep(pause_duration)
+
+                while pause_duration > 0:
+                    if pause_duration <= 10:
+                        utils.logger.info(f"[XiaoHongShuCrawler.follow] 休息中，剩余休息时间还有 {pause_duration} 秒")
+                        await asyncio.sleep(1)
+                        pause_duration -= 1
+                    else:
+                        await asyncio.sleep(10)
+                        pause_duration -= 10
+                        utils.logger.info(f"[XiaoHongShuCrawler.follow] 休息中，剩余休息时间还有 {pause_duration} 秒")
 
         utils.logger.info("[XiaoHongShuCrawler.follow] 关注流程结束")
 
@@ -243,22 +256,25 @@ class XiaoHongShuCrawler(AbstractCrawler):
         total_ids = len(user_ids)
         utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 总共有 {total_ids} 个用户ID需要关注")
 
-        if total_ids > 100:
-            utils.logger.warning("[XiaoHongShuCrawler.follow_by_api] 用户ID列表超过100，将分批执行")
-
         start = 0
         total_processed = 0
         while start < total_ids:
-            # 随机确定批次大小（最小1，最大100）
-            batch_size = random.randint(1, 100)
+            batch_size = random.randint(1, 30) if total_ids > 30 else total_ids
             batch = user_ids[start:start + batch_size]
             batch_count = len(batch)
             utils.logger.info(
                 f"[XiaoHongShuCrawler.follow_by_api] 处理从第 {start} 条到第 {start + batch_count - 1} 条共 {batch_count} 个用户")
 
-            for user_id in batch:
+            for i, user_id in enumerate(batch):
+                current_index = total_processed + i + 1
+                remaining = total_ids - current_index
+                utils.logger.info(
+                    f"[XiaoHongShuCrawler.follow_by_api] 这是第 {current_index} 个用户，当前批次总共有 {batch_count} 个用户，还剩 {remaining} 个待执行")
+
                 utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api]: ID --> {user_id}")
                 await self.xhs_client.follow_user(user_id)
+                utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 延迟1-2s执行")
+                await asyncio.sleep(random.uniform(1.0, 2.0))
 
                 # 频繁操作可能会需要验证，这里验证通过后等待30秒再执行以避免频繁操作
                 if "滑块验证" in await self.context_page.title():
@@ -267,7 +283,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
 
             start += batch_count
             total_processed += batch_count
-            remaining = total_ids - start
+            remaining = total_ids - total_processed
             utils.logger.info(
                 f"[XiaoHongShuCrawler.follow_by_api] 本次循环执行了 {batch_count} 条，累计执行了 {total_processed} 条，还剩 {remaining} 条未执行")
 
@@ -275,7 +291,16 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 # 随机确定休息时间（最小1秒，最大180秒）
                 pause_duration = random.randint(1, 180)
                 utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 休息 {pause_duration} 秒")
-                await asyncio.sleep(pause_duration)
+
+                while pause_duration > 0:
+                    if pause_duration <= 10:
+                        utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 休息中，剩余休息时间还有 {pause_duration} 秒")
+                        await asyncio.sleep(1)
+                        pause_duration -= 1
+                    else:
+                        await asyncio.sleep(10)
+                        pause_duration -= 10
+                        utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 休息中，剩余休息时间还有 {pause_duration} 秒")
 
         utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 关注流程结束，共关注了 {total_processed} 个用户")
 
