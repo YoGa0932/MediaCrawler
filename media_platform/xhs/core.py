@@ -185,7 +185,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 current_index = total_processed + i + 1
                 remaining = total_ids - current_index
                 utils.logger.info(
-                    f"[XiaoHongShuCrawler.follow] 这是第 {current_index} 个用户，当前批次总共有 {batch_count} 个用户，还剩 {remaining} 个待执行")
+                    f"[XiaoHongShuCrawler.follow] 这是第 {i} 个用户，当前批次总共有 {batch_count} 个用户，还剩 {remaining} 个待执行")
 
                 utils.logger.info(f"[XiaoHongShuCrawler.follow] 访问URL: {url}")
                 await self.context_page.goto(url)
@@ -271,7 +271,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 current_index = total_processed + i + 1
                 remaining = total_ids - current_index
                 utils.logger.info(
-                    f"[XiaoHongShuCrawler.follow_by_api] 这是第 {current_index} 个用户，当前批次总共有 {batch_count} 个用户，还剩 {remaining} 个待执行")
+                    f"[XiaoHongShuCrawler.follow_by_api] 这是第 {i} 个用户，当前批次总共有 {batch_count} 个用户，还剩 {remaining} 个待执行")
 
                 utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api]: ID --> {user_id}")
                 await self.xhs_client.follow_user(user_id)
