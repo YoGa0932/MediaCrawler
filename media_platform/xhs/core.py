@@ -189,8 +189,9 @@ class XiaoHongShuCrawler(AbstractCrawler):
 
                 utils.logger.info(f"[XiaoHongShuCrawler.follow] 访问URL: {url}")
                 await self.context_page.goto(url)
-                utils.logger.info(f"[XiaoHongShuCrawler.follow] 延迟1-2s执行")
-                await asyncio.sleep(random.uniform(1.0, 2.0))
+                delay = round(random.uniform(0.3, 1.5), 1)
+                utils.logger.info(f"[XiaoHongShuCrawler.follow] 延迟{delay}s执行")
+                await asyncio.sleep(delay)
 
                 try:
                     # 频繁操作可能会需要验证，这里验证通过后等待300秒再执行以避免频繁操作
@@ -239,9 +240,10 @@ class XiaoHongShuCrawler(AbstractCrawler):
 
                 while pause_duration > 0:
                     if pause_duration <= 10:
-                        utils.logger.info(f"[XiaoHongShuCrawler.follow] 休息中，剩余休息时间还有 {pause_duration} 秒")
-                        await asyncio.sleep(1)
-                        pause_duration -= 1
+                        for i in range(pause_duration, 0, -1):
+                            utils.logger.info(f"[XiaoHongShuCrawler.follow] 休息中，剩余休息时间还有 {i} 秒")
+                            await asyncio.sleep(1)
+                        pause_duration = 0
                     else:
                         await asyncio.sleep(10)
                         pause_duration -= 10
@@ -273,8 +275,9 @@ class XiaoHongShuCrawler(AbstractCrawler):
 
                 utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api]: ID --> {user_id}")
                 await self.xhs_client.follow_user(user_id)
-                utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 延迟1-2s执行")
-                await asyncio.sleep(random.uniform(1.0, 2.0))
+                delay = round(random.uniform(0.3, 1.5), 1)
+                utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 延迟{delay}s执行")
+                await asyncio.sleep(delay)
 
                 # 频繁操作可能会需要验证，这里验证通过后等待30秒再执行以避免频繁操作
                 if "滑块验证" in await self.context_page.title():
@@ -294,13 +297,15 @@ class XiaoHongShuCrawler(AbstractCrawler):
 
                 while pause_duration > 0:
                     if pause_duration <= 10:
-                        utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 休息中，剩余休息时间还有 {pause_duration} 秒")
-                        await asyncio.sleep(1)
-                        pause_duration -= 1
+                        for i in range(pause_duration, 0, -1):
+                            utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 休息中，剩余休息时间还有 {i} 秒")
+                            await asyncio.sleep(1)
+                        pause_duration = 0
                     else:
                         await asyncio.sleep(10)
                         pause_duration -= 10
-                        utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 休息中，剩余休息时间还有 {pause_duration} 秒")
+                        utils.logger.info(
+                            f"[XiaoHongShuCrawler.follow_by_api] 休息中，剩余休息时间还有 {pause_duration} 秒")
 
         utils.logger.info(f"[XiaoHongShuCrawler.follow_by_api] 关注流程结束，共关注了 {total_processed} 个用户")
 
