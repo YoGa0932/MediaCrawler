@@ -7,7 +7,7 @@ COOKIES = ""
 SORT_TYPE = "popularity_descending"
 # 具体值参见media_platform.xxx.field下的枚举值，暂时只支持抖音
 PUBLISH_TIME_TYPE = 0
-CRAWLER_TYPE = "follow"  # 爬取类型，search(关键词搜索) | detail(帖子详情)| creator(创作者主页数据) | follow(关注)
+CRAWLER_TYPE = "search"  # 爬取类型，search(关键词搜索) | detail(帖子详情)| creator(创作者主页数据)
 
 # 是否开启 IP 代理
 ENABLE_IP_PROXY = False
@@ -25,7 +25,7 @@ IP_PROXY_PROVIDER_NAME = "kuaidaili"
 HEADLESS = False
 
 # 是否保存登录状态
-SAVE_LOGIN_STATE = False
+SAVE_LOGIN_STATE = True
 
 # 数据保存类型选项配置,支持三种类型：csv、db、json
 SAVE_DATA_OPTION = "csv"  # csv or db or json
@@ -37,7 +37,7 @@ USER_DATA_DIR = "%s_user_data_dir"  # %s will be replaced by platform name
 START_PAGE = 1
 
 # 爬取视频/帖子的数量控制
-CRAWLER_MAX_NOTES_COUNT = 20
+CRAWLER_MAX_NOTES_COUNT = 100
 
 # 并发爬虫数量控制
 MAX_CONCURRENCY_NUM = 1
@@ -46,29 +46,16 @@ MAX_CONCURRENCY_NUM = 1
 ENABLE_GET_IMAGES = False
 
 # 是否开启爬评论模式, 默认不开启爬评论
-ENABLE_GET_COMMENTS = True
+ENABLE_GET_COMMENTS = False
 
 # 是否开启爬二级评论模式, 默认不开启爬二级评论
 # 老版本项目使用了 db, 则需参考 schema/tables.sql line 287 增加表字段
-ENABLE_GET_SUB_COMMENTS = True
+ENABLE_GET_SUB_COMMENTS = False
 
 # 指定小红书需要爬虫的笔记ID列表
 XHS_SPECIFIED_ID_LIST = [
-    "6440ffa70000000027000751",
+    "6422c2750000000027000d88",
     # ........................
-]
-
-# (\S+) replace "\1",
-# 小红书关注ID
-XHS_USER_ID = [
-    "5d2092bd0000000016031e41",
-    "5c5955d9000000001a01dc3a",
-    "5b7f773bbe7cff0001be3186",
-    "5b1be2a5e8ac2b3724b9c167",
-    "5955f15682ec397f11ffbd6a",
-    "5f350cbe000000000101c3a6",
-    "639c672b0000000027028d8a",
-    "61eb9ded00000000100042ce",
 ]
 
 # 指定抖音需要爬取的ID列表
@@ -98,9 +85,19 @@ WEIBO_SPECIFIED_ID_LIST = [
     # ........................
 ]
 
+# 指定贴吧需要爬取的帖子列表
+TIEBA_SPECIFIED_ID_LIST = [
+
+]
+
+# 指定贴吧名称列表，爬取该贴吧下的帖子
+TIEBA_NAME_LIST = [
+    # "盗墓笔记"
+]
+
 # 指定小红书创作者ID列表
 XHS_CREATOR_ID_LIST = [
-    "6443b90b000000001002b74c",
+    "63e36c9a000000002703502b",
     # ........................
 ]
 
@@ -122,19 +119,18 @@ KS_CREATOR_ID_LIST = [
     # ........................
 ]
 
-
-#词云相关
-#是否开启生成评论词云图
+# 词云相关
+# 是否开启生成评论词云图
 ENABLE_GET_WORDCLOUD = False
 # 自定义词语及其分组
-#添加规则：xx:yy 其中xx为自定义添加的词组，yy为将xx该词组分到的组名。
+# 添加规则：xx:yy 其中xx为自定义添加的词组，yy为将xx该词组分到的组名。
 CUSTOM_WORDS = {
     '零几': '年份',  # 将“零几”识别为一个整体
     '高频词': '专业术语'  # 示例自定义词
 }
 
-#停用(禁用)词文件路径
+# 停用(禁用)词文件路径
 STOP_WORDS_FILE = "./docs/hit_stopwords.txt"
 
-#中文字体文件路径
-FONT_PATH= "./docs/STZHONGS.TTF"
+# 中文字体文件路径
+FONT_PATH = "./docs/STZHONGS.TTF"
