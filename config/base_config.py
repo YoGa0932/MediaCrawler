@@ -85,6 +85,12 @@ WEIBO_SPECIFIED_ID_LIST = [
     # ........................
 ]
 
+# 指定weibo创作者ID列表
+WEIBO_CREATOR_ID_LIST = [
+    "5533390220",
+    # ........................
+]
+
 # 指定贴吧需要爬取的帖子列表
 TIEBA_SPECIFIED_ID_LIST = [
 
@@ -93,6 +99,11 @@ TIEBA_SPECIFIED_ID_LIST = [
 # 指定贴吧名称列表，爬取该贴吧下的帖子
 TIEBA_NAME_LIST = [
     # "盗墓笔记"
+]
+
+TIEBA_CREATOR_URL_LIST = [
+    "https://tieba.baidu.com/home/main/?id=tb.1.7f139e2e.6CyEwxu3VJruH_-QqpCi6g&fr=frs",
+    # ........................
 ]
 
 # 指定小红书创作者ID列表
